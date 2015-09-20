@@ -17,6 +17,7 @@ func TestMarshalMap(t *testing.T) {
 		"int64":   int64(1),
 		"float32": float32(math.Pi),
 		"float64": math.Pi,
+		"byte":    []byte{0x0, 0x1, 0x2, 0x3, 0x4},
 		"null":    nil,
 		"ss":      []string{"a", "b", "c", "d", "e"},
 		"ns":      []int{1, 2, 3},
@@ -62,6 +63,11 @@ func TestMarshalMap(t *testing.T) {
 	n64, _ := strconv.ParseInt(*u["int64"].N, 10, 64)
 	if n64 != 1 {
 		t.Error("int64 does not match")
+		return
+	}
+
+	if len(u["byte"].B) != 5 {
+		t.Error("byte does not match")
 		return
 	}
 
