@@ -11,11 +11,6 @@ import (
 
 func TestMarshalMap(t *testing.T) {
 
-	child := map[string]interface{}{
-		"id":    "hogehoge",
-		"child": true,
-	}
-
 	m := map[string]interface{}{
 		"str":     "string",
 		"int":     1,
@@ -23,8 +18,12 @@ func TestMarshalMap(t *testing.T) {
 		"float32": float32(math.Pi),
 		"float64": math.Pi,
 		"null":    nil,
-		"slice":   []string{"a", "b", "c", "d", "e"},
-		"map":     child,
+		"ss":      []string{"a", "b", "c", "d", "e"},
+		"ns":      []int{1, 2, 3},
+		"map": map[string]interface{}{
+			"id":    "hogehoge",
+			"child": true,
+		},
 	}
 
 	u := ddb.Marshal(m)
@@ -71,9 +70,15 @@ func TestMarshalMap(t *testing.T) {
 		return
 	}
 
-	ss := u["slice"].SS
+	ss := u["ss"].SS
 	if len(ss) != 5 {
-		t.Error("slice does not match")
+		t.Error("ss set does not match")
+		return
+	}
+
+	ns := u["ns"].NS
+	if len(ns) != 3 {
+		t.Error("ns does not match")
 		return
 	}
 

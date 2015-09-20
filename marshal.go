@@ -8,6 +8,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
+// Marshal converts map or struct to dynamodb attribute value
 func Marshal(iv interface{}) map[string]*dynamodb.AttributeValue {
 
 	vv := iv.(map[string]interface{})
@@ -41,6 +42,10 @@ func Marshal(iv interface{}) map[string]*dynamodb.AttributeValue {
 			attrValue = makeFloat64AttrValue(float64(v))
 		case []string:
 			attrValue = makeStringSliceAttrValue(v)
+		case []int:
+			attrValue = makeIntSliceAttrValue(v)
+		case []int64:
+			attrValue = makeInt64SliceAttrValue(v)
 		}
 
 		reflectValue := reflect.ValueOf(value)
@@ -79,6 +84,26 @@ func makeStringSliceAttrValue(strs []string) *dynamodb.AttributeValue {
 	}
 
 	return &dynamodb.AttributeValue{SS: slices}
+}
+
+func makeIntSliceAttrValue(ints []int) *dynamodb.AttributeValue {
+	slices := make([]*string, len(ints))
+
+	for i, v := range ints {
+		slices[i] = aws.String(fmt.Sprintf("%d", v))
+	}
+
+	return &dynamodb.AttributeValue{NS: slices}
+}
+
+func makeInt64SliceAttrValue(ints []int64) *dynamodb.AttributeValue {
+	slices := make([]*string, len(ints))
+
+	for i, v := range ints {
+		slices[i] = aws.String(fmt.Sprintf("%d", v))
+	}
+
+	return &dynamodb.AttributeValue{NS: slices}
 }
 
 func makeMapAttrValue(m interface{}) *dynamodb.AttributeValue {
