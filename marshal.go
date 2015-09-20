@@ -3,6 +3,7 @@ package ddb
 import (
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -76,8 +77,12 @@ func makeUInt64AttrValue(v uint64) *dynamodb.AttributeValue {
 	return makeNumberAttrValue(fmt.Sprintf("%d", v))
 }
 
+func makeFloat32AttrValue(v float32) *dynamodb.AttributeValue {
+	return makeNumberAttrValue(strconv.FormatFloat(float64(v), 'f', -1, 32))
+}
+
 func makeFloat64AttrValue(v float64) *dynamodb.AttributeValue {
-	return makeNumberAttrValue(fmt.Sprintf("%f", v))
+	return makeNumberAttrValue(strconv.FormatFloat(v, 'f', -1, 64))
 }
 
 func makeNumberAttrValue(str string) *dynamodb.AttributeValue {

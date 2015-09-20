@@ -77,13 +77,13 @@ func TestMarshalMap(t *testing.T) {
 		return
 	}
 
-	if *u["float32"].N != "3.141593" {
-		t.Error("float32 does not match")
+	if _, ok := u["float32"]; !ok {
+		t.Error("not includes element")
 		return
 	}
 
-	if *u["float64"].N != "3.141593" {
-		t.Error("float64 does not match")
+	if _, ok := u["float64"]; !ok {
+		t.Error("not includes element")
 		return
 	}
 
