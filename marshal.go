@@ -196,8 +196,6 @@ func makeListAttrValue(l interface{}) *dynamodb.AttributeValue {
 }
 
 func marshalValue(value reflect.Value) *dynamodb.AttributeValue {
-	fmt.Println(value)
-
 	switch value.Type().Kind() {
 	case reflect.String:
 		return makeStringAttrValue(value.String())
