@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/runtakun/dynamodb-marshaler-go"
 )
 
@@ -44,9 +45,14 @@ func TestMarshalMap(t *testing.T) {
 	}
 
 	u := ddb.Marshal(m)
+	assertMarshal(t, u)
+}
+
+func assertMarshal(t *testing.T, u map[string]*dynamodb.AttributeValue) {
 
 	if u == nil {
 		t.Error("t is nil")
+		return
 	}
 
 	if _, ok := u["str"]; !ok {
@@ -114,4 +120,20 @@ func TestMarshalMap(t *testing.T) {
 	}
 
 	t.Logf("return value: %s", awsutil.Prettify(u))
+}
+
+type sample struct {
+	Str string `dynamodb:"str"`
+	Int int    `dynamodb:"int"`
+}
+
+func TestMarshalStruct(t *testing.T) {
+
+	s := &sample{
+		Str: "string",
+		Int: 1,
+	}
+
+	u := ddb.Marshal(s)
+	assertMarshal(t, u)
 }
