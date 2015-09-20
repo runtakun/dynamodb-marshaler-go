@@ -2,6 +2,7 @@ package ddb
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -42,6 +43,12 @@ func Marshal(iv interface{}) map[string]*dynamodb.AttributeValue {
 			attrValue = makeStringSliceAttrValue(v)
 		}
 
+		reflectValue := reflect.ValueOf(value)
+		t := reflectValue.Type()
+		if t.Kind() == reflect.Map {
+			attrValue = makeMapAttrValue(value)
+		}
+
 		ret[key] = attrValue
 	}
 
@@ -72,4 +79,8 @@ func makeStringSliceAttrValue(strs []string) *dynamodb.AttributeValue {
 	}
 
 	return &dynamodb.AttributeValue{SS: slices}
+}
+
+func makeMapAttrValue(m interface{}) *dynamodb.AttributeValue {
+	return &dynamodb.AttributeValue{M: Marshal(m)}
 }

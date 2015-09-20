@@ -11,6 +11,11 @@ import (
 
 func TestMarshalMap(t *testing.T) {
 
+	child := map[string]interface{}{
+		"id":    "hogehoge",
+		"child": true,
+	}
+
 	m := map[string]interface{}{
 		"str":     "string",
 		"int":     1,
@@ -19,6 +24,7 @@ func TestMarshalMap(t *testing.T) {
 		"float64": math.Pi,
 		"null":    nil,
 		"slice":   []string{"a", "b", "c", "d", "e"},
+		"map":     child,
 	}
 
 	u := ddb.Marshal(m)
