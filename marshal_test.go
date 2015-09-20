@@ -24,6 +24,16 @@ func TestMarshalMap(t *testing.T) {
 			"id":    "hogehoge",
 			"child": true,
 		},
+		"list": []interface{}{
+			map[string]interface{}{
+				"key":  1,
+				"name": "name1",
+			},
+			map[string]interface{}{
+				"key":  2,
+				"name": "name2",
+			},
+		},
 	}
 
 	u := ddb.Marshal(m)
@@ -79,6 +89,12 @@ func TestMarshalMap(t *testing.T) {
 	ns := u["ns"].NS
 	if len(ns) != 3 {
 		t.Error("ns does not match")
+		return
+	}
+
+	l := u["list"].L
+	if len(l) != 2 {
+		t.Error("list does not match")
 		return
 	}
 
