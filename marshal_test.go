@@ -21,6 +21,12 @@ func TestMarshalMap(t *testing.T) {
 		"null":    nil,
 		"ss":      []string{"a", "b", "c", "d", "e"},
 		"ns":      []int{1, 2, 3},
+		"bs": [][]byte{
+			[]byte{0x0, 0x1, 0x2, 0x3},
+			[]byte{0x4, 0x5, 0x6, 0x7},
+			[]byte{0x8, 0x9, 0xa, 0xb},
+			[]byte{0xc, 0xd, 0xe, 0xf},
+		},
 		"map": map[string]interface{}{
 			"id":    "hogehoge",
 			"child": true,
@@ -86,15 +92,18 @@ func TestMarshalMap(t *testing.T) {
 		return
 	}
 
-	ss := u["ss"].SS
-	if len(ss) != 5 {
+	if len(u["ss"].SS) != 5 {
 		t.Error("ss set does not match")
 		return
 	}
 
-	ns := u["ns"].NS
-	if len(ns) != 3 {
+	if len(u["ns"].NS) != 3 {
 		t.Error("ns does not match")
+		return
+	}
+
+	if len(u["bs"].BS) != 4 {
+		t.Error("bs does not match")
 		return
 	}
 

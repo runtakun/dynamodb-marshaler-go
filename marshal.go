@@ -52,6 +52,8 @@ func marshal(value interface{}) *dynamodb.AttributeValue {
 		return makeInt64SliceAttrValue(v)
 	case []byte:
 		return &dynamodb.AttributeValue{B: v}
+	case [][]byte:
+		return &dynamodb.AttributeValue{BS: v}
 	}
 
 	reflectValue := reflect.ValueOf(value)
