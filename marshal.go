@@ -10,6 +10,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
+var typeOfBytes = reflect.TypeOf([]byte(nil))
+
 // Marshal converts map or struct to dynamodb attribute value
 func Marshal(iv interface{}) map[string]*dynamodb.AttributeValue {
 	kind := reflect.TypeOf(iv).Kind()
@@ -93,6 +95,9 @@ func marshalValue(value reflect.Value) *dynamodb.AttributeValue {
 	case reflect.Ptr:
 		return marshalPtrValue(value)
 	case reflect.Slice:
+		if value.Type() == typeOfBytes {
+			return marshalBytesValue(value)
+		}
 		return marshalSliceValue(value)
 	case reflect.Struct:
 		return marshalStructValue(value)
@@ -169,6 +174,14 @@ func marshalPtrValue(value reflect.Value) *dynamodb.AttributeValue {
 	}
 
 	return marshalValue(value.Elem())
+}
+
+func marshalBytesValue(value reflect.Value) *dynamodb.AttributeValue {
+	if value.IsNil() {
+		return makeNullAttrValue()
+	}
+
+	return &dynamodb.AttributeValue{B: value.Bytes()}
 }
 
 func marshalSliceValue(value reflect.Value) *dynamodb.AttributeValue {

@@ -15,6 +15,7 @@ import (
 type sample struct {
 	Str             string                 `dynamodb:"str"`
 	Bool            bool                   `dynamodb:"bool"`
+	Blob            []byte                 `dynamodb:"blob"`
 	Int             int                    `dynamodb:"int"`
 	Int8            int8                   `dynamodb:"int8"`
 	Int16           int16                  `dynamodb:"int16"`
@@ -52,6 +53,7 @@ var _ = Describe("Marshal", func() {
 			s := &sample{
 				Str:             "foo",
 				Bool:            false,
+				Blob:            []byte{0x0, 0x1, 0x2, 0x3, 0x4},
 				Int:             1,
 				Int8:            2,
 				Int16:           3,
@@ -93,9 +95,8 @@ var _ = Describe("Marshal", func() {
 			Expect(sut["bool"].S).To(BeNil())
 		})
 
-		It("should be `bool` element to dynamodb attribute value", func() {
-			Expect(*sut["bool"].BOOL).To(BeFalse())
-			Expect(sut["bool"].S).To(BeNil())
+		It("should be `blob` element to dynamodb attribute value", func() {
+			Expect(sut["blob"].B).Should(HaveLen(5))
 		})
 
 		It("should be `int` element to dynamodb attribute value", func() {
