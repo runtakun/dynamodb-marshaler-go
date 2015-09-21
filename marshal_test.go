@@ -2,6 +2,7 @@ package ddb_test
 
 import (
 	"math"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -145,6 +146,16 @@ var _ = Describe("Marshal", func() {
 		It("should be `uint64` element to dynamodb attribute value", func() {
 			Expect(*sut["uint64"].N).To(Equal("5"))
 			Expect(sut["uint64"].S).To(BeNil())
+		})
+
+		It("should be `float32` element to dynamodb attribute value", func() {
+			f32, _ := strconv.ParseFloat(*sut["float32"].N, 32)
+			Expect(f32).Should(BeNumerically("~", math.E, 1e-6))
+		})
+
+		It("should be `float64` element to dynamodb attribute value", func() {
+			f64, _ := strconv.ParseFloat(*sut["float64"].N, 64)
+			Expect(f64).Should(BeNumerically("~", math.Pi, 1e-6))
 		})
 
 		It("should be `arr` element to dynamodb attribute value", func() {
