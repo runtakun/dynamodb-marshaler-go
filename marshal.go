@@ -14,7 +14,7 @@ import (
 func Marshal(iv interface{}) map[string]*dynamodb.AttributeValue {
 	kind := reflect.TypeOf(iv).Kind()
 	if kind == reflect.Map {
-		return marshalMap(iv)
+		return marshalMap(reflect.ValueOf(iv))
 	} else if kind == reflect.Ptr {
 		return marshalStruct(reflect.ValueOf(iv).Elem())
 	}
@@ -22,19 +22,21 @@ func Marshal(iv interface{}) map[string]*dynamodb.AttributeValue {
 	return nil
 }
 
-func marshalMap(iv interface{}) map[string]*dynamodb.AttributeValue {
-	vv := iv.(map[string]interface{})
+func marshalMap(value reflect.Value) map[string]*dynamodb.AttributeValue {
 	ret := make(map[string]*dynamodb.AttributeValue)
 
-	for key, value := range vv {
-		ret[key] = marshal(value)
+	for _, keyValue := range value.MapKeys() {
+		if keyValue.Type().Kind() == reflect.String {
+			ret[keyValue.String()] = marshalValue(value.MapIndex(keyValue))
+		} else {
+			panic("map key must be string")
+		}
 	}
 
 	return ret
 }
 
 func marshalStruct(value reflect.Value) map[string]*dynamodb.AttributeValue {
-
 	t := value.Type()
 
 	numField := t.NumField()
@@ -70,149 +72,24 @@ func parseTag(tag string) (string, string) {
 	return tag, ""
 }
 
-func marshal(value interface{}) *dynamodb.AttributeValue {
-
-	if value == nil {
-		return makeNullAttrValue()
-	}
-
-	switch v := value.(type) {
-	case string:
-		return makeStringAttrValue(v)
-	case bool:
-		return makeBoolAttrValue(v)
-	case int:
-		return makeInt64AttrValue(int64(v))
-	case int64:
-		return makeInt64AttrValue(v)
-	case uint:
-		return makeUInt64AttrValue(uint64(v))
-	case uint64:
-		return makeUInt64AttrValue(v)
-	case float32:
-		return makeFloat64AttrValue(float64(v))
-	case float64:
-		return makeFloat64AttrValue(float64(v))
-	case []string:
-		return makeStringSliceAttrValue(v)
-	case []int:
-		return makeIntSliceAttrValue(v)
-	case []int64:
-		return makeInt64SliceAttrValue(v)
-	case []byte:
-		return &dynamodb.AttributeValue{B: v}
-	case [][]byte:
-		return &dynamodb.AttributeValue{BS: v}
-	}
-
-	reflectValue := reflect.ValueOf(value)
-	t := reflectValue.Type()
-	switch t.Kind() {
-	case reflect.Map:
-		return makeMapAttrValue(value)
-	case reflect.Slice:
-		return makeListAttrValue(value)
-	}
-
-	return marshalValue(reflectValue)
-}
-
-func makeNullAttrValue() *dynamodb.AttributeValue {
-	return &dynamodb.AttributeValue{NULL: aws.Bool(true)}
-}
-
-func makeStringAttrValue(v string) *dynamodb.AttributeValue {
-	return &dynamodb.AttributeValue{S: aws.String(v)}
-}
-
-func makeBoolAttrValue(v bool) *dynamodb.AttributeValue {
-	return &dynamodb.AttributeValue{BOOL: aws.Bool(v)}
-}
-
-func makeInt64AttrValue(v int64) *dynamodb.AttributeValue {
-	return makeNumberAttrValue(fmt.Sprintf("%d", v))
-}
-
-func makeUInt64AttrValue(v uint64) *dynamodb.AttributeValue {
-	return makeNumberAttrValue(fmt.Sprintf("%d", v))
-}
-
-func makeFloat32AttrValue(v float32) *dynamodb.AttributeValue {
-	return makeNumberAttrValue(strconv.FormatFloat(float64(v), 'f', -1, 32))
-}
-
-func makeFloat64AttrValue(v float64) *dynamodb.AttributeValue {
-	return makeNumberAttrValue(strconv.FormatFloat(v, 'f', -1, 64))
-}
-
-func makeNumberAttrValue(str string) *dynamodb.AttributeValue {
-	return &dynamodb.AttributeValue{N: aws.String(str)}
-}
-
-func makeStringSliceAttrValue(strs []string) *dynamodb.AttributeValue {
-	slices := make([]*string, len(strs))
-
-	for i, v := range strs {
-		slices[i] = aws.String(v)
-	}
-
-	return &dynamodb.AttributeValue{SS: slices}
-}
-
-func makeIntSliceAttrValue(ints []int) *dynamodb.AttributeValue {
-	slices := make([]*string, len(ints))
-
-	for i, v := range ints {
-		slices[i] = aws.String(fmt.Sprintf("%d", v))
-	}
-
-	return &dynamodb.AttributeValue{NS: slices}
-}
-
-func makeInt64SliceAttrValue(ints []int64) *dynamodb.AttributeValue {
-	slices := make([]*string, len(ints))
-
-	for i, v := range ints {
-		slices[i] = aws.String(fmt.Sprintf("%d", v))
-	}
-
-	return &dynamodb.AttributeValue{NS: slices}
-}
-
-func makeMapAttrValue(m interface{}) *dynamodb.AttributeValue {
-	return &dynamodb.AttributeValue{M: Marshal(m)}
-}
-
-func makeListAttrValue(l interface{}) *dynamodb.AttributeValue {
-
-	values := l.([]interface{})
-
-	list := make([]*dynamodb.AttributeValue, len(values))
-	for i, value := range values {
-		list[i] = marshal(value)
-	}
-
-	return &dynamodb.AttributeValue{L: list}
-}
-
 func marshalValue(value reflect.Value) *dynamodb.AttributeValue {
 	switch value.Type().Kind() {
 	case reflect.String:
-		return makeStringAttrValue(value.String())
+		return marshalStringValue(value)
 	case reflect.Bool:
-		return makeBoolAttrValue(value.Bool())
+		return marshalBoolValue(value)
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return makeInt64AttrValue(value.Int())
+		return marshalInt64Value(value)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		return makeUInt64AttrValue(value.Uint())
+		return marshalUint64Value(value)
 	case reflect.Float32, reflect.Float64:
-		return makeFloat64AttrValue(value.Float())
+		return marshalFloat64Value(value)
 	case reflect.Array:
 		return marshalArrayValue(value)
 	case reflect.Interface:
 		return marshalInterfaceValue(value)
 	case reflect.Map:
-		return makeMapAttrValue(value)
+		return marshalMapValue(value)
 	case reflect.Ptr:
 		return marshalPtrValue(value)
 	case reflect.Slice:
@@ -226,6 +103,43 @@ func marshalValue(value reflect.Value) *dynamodb.AttributeValue {
 	return nil
 }
 
+func marshalStringValue(value reflect.Value) *dynamodb.AttributeValue {
+	str := value.String()
+	if str == "" {
+		return makeNullAttrValue()
+	}
+
+	return makeStringAttrValue(str)
+}
+
+func makeNullAttrValue() *dynamodb.AttributeValue {
+	return &dynamodb.AttributeValue{NULL: aws.Bool(true)}
+}
+
+func makeStringAttrValue(str string) *dynamodb.AttributeValue {
+	return &dynamodb.AttributeValue{S: aws.String(str)}
+}
+
+func marshalBoolValue(value reflect.Value) *dynamodb.AttributeValue {
+	return &dynamodb.AttributeValue{BOOL: aws.Bool(value.Bool())}
+}
+
+func marshalInt64Value(value reflect.Value) *dynamodb.AttributeValue {
+	return makeNumberAttrValue(fmt.Sprintf("%d", value.Int()))
+}
+
+func marshalUint64Value(value reflect.Value) *dynamodb.AttributeValue {
+	return makeNumberAttrValue(fmt.Sprintf("%d", value.Uint()))
+}
+
+func marshalFloat64Value(value reflect.Value) *dynamodb.AttributeValue {
+	return makeNumberAttrValue(strconv.FormatFloat(value.Float(), 'f', -1, 64))
+}
+
+func makeNumberAttrValue(str string) *dynamodb.AttributeValue {
+	return &dynamodb.AttributeValue{N: aws.String(str)}
+}
+
 func marshalArrayValue(value reflect.Value) *dynamodb.AttributeValue {
 	length := value.Len()
 
@@ -235,6 +149,10 @@ func marshalArrayValue(value reflect.Value) *dynamodb.AttributeValue {
 	}
 
 	return &dynamodb.AttributeValue{L: list}
+}
+
+func marshalMapValue(value reflect.Value) *dynamodb.AttributeValue {
+	return &dynamodb.AttributeValue{M: marshalMap(value)}
 }
 
 func marshalInterfaceValue(value reflect.Value) *dynamodb.AttributeValue {
