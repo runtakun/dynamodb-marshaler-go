@@ -12,20 +12,31 @@ import (
 )
 
 type sample struct {
-	Str     string  `dynamodb:"str"`
-	Bool    bool    `dynamodb:"bool"`
-	Int     int     `dynamodb:"int"`
-	Int8    int8    `dynamodb:"int8"`
-	Int16   int16   `dynamodb:"int16"`
-	Int32   int32   `dynamodb:"int32"`
-	Int64   int64   `dynamodb:"int64"`
-	Uint    uint    `dynamodb:"uint"`
-	Uint8   uint8   `dynamodb:"uint8"`
-	Uint16  uint16  `dynamodb:"uint16"`
-	Uint32  uint32  `dynamodb:"uint32"`
-	Uint64  uint64  `dynamodb:"uint64"`
-	Float32 float32 `dynamodb:"float32"`
-	Float64 float64 `dynamodb:"float64"`
+	Str             string                 `dynamodb:"str"`
+	Bool            bool                   `dynamodb:"bool"`
+	Int             int                    `dynamodb:"int"`
+	Int8            int8                   `dynamodb:"int8"`
+	Int16           int16                  `dynamodb:"int16"`
+	Int32           int32                  `dynamodb:"int32"`
+	Int64           int64                  `dynamodb:"int64"`
+	Uint            uint                   `dynamodb:"uint"`
+	Uint8           uint8                  `dynamodb:"uint8"`
+	Uint16          uint16                 `dynamodb:"uint16"`
+	Uint32          uint32                 `dynamodb:"uint32"`
+	Uint64          uint64                 `dynamodb:"uint64"`
+	Float32         float32                `dynamodb:"float32"`
+	Float64         float64                `dynamodb:"float64"`
+	Arr             [3]int                 `dynamodb:"arr"`
+	InterfaceInt    interface{}            `dynamodb:"interface_int"`
+	InterfaceString interface{}            `dynamodb:"interface_str"`
+	Map             map[string]interface{} `dynamodb:"map"`
+	Ptr             *string                `dynamodb:"ptr"`
+	Slice           []string               `dynamodb:"slice"`
+	Child           child                  `dynamodb:"child"`
+}
+
+type child struct {
+	Content string `dynamodb:"content"`
 }
 
 var _ = Describe("Marshal", func() {
@@ -34,21 +45,34 @@ var _ = Describe("Marshal", func() {
 		var sut map[string]*dynamodb.AttributeValue
 
 		BeforeEach(func() {
+
+			ptr := "ptr"
+
 			s := &sample{
-				Str:     "foo",
-				Bool:    false,
-				Int:     1,
-				Int8:    2,
-				Int16:   3,
-				Int32:   4,
-				Int64:   5,
-				Uint:    1,
-				Uint8:   2,
-				Uint16:  3,
-				Uint32:  4,
-				Uint64:  5,
-				Float32: math.E,
-				Float64: math.Pi,
+				Str:             "foo",
+				Bool:            false,
+				Int:             1,
+				Int8:            2,
+				Int16:           3,
+				Int32:           4,
+				Int64:           5,
+				Uint:            1,
+				Uint8:           2,
+				Uint16:          3,
+				Uint32:          4,
+				Uint64:          5,
+				Float32:         math.E,
+				Float64:         math.Pi,
+				Arr:             [3]int{1, 2, 3},
+				InterfaceInt:    12345,
+				InterfaceString: "bar",
+				Map: map[string]interface{}{
+					"map_foo": "map_foo",
+					"map_int": 54321,
+				},
+				Ptr:   &ptr,
+				Slice: []string{"f", "o", "o"},
+				Child: child{Content: "bar_child"},
 			}
 			sut = Marshal(s)
 			GinkgoWriter.Write([]byte(awsutil.Prettify(sut)))
@@ -121,6 +145,34 @@ var _ = Describe("Marshal", func() {
 		It("should be `uint64` element to dynamodb attribute value", func() {
 			Expect(*sut["uint64"].N).To(Equal("5"))
 			Expect(sut["uint64"].S).To(BeNil())
+		})
+
+		It("should be `arr` element to dynamodb attribute value", func() {
+			Expect(sut["arr"].L).Should(HaveLen(3))
+			Expect(sut["arr"].S).To(BeNil())
+		})
+
+		It("should be interface type to dynamodb attribute value", func() {
+			Expect(*sut["interface_int"].N).To(Equal("12345"))
+			Expect(*sut["interface_str"].S).To(Equal("bar"))
+		})
+
+		It("should be `map` type to dynamodb attribute value", func() {
+			// Expect(sut["map"].M).Should(HaveKeyWithValue("map_foo", "map_bar"))
+			// Expect(sut["map"].M).Should(HaveKeyWithValue("map_int", 54321))
+		})
+
+		It("should be `ptr` type to dynamodb attribute value", func() {
+			Expect(*sut["ptr"].S).To(Equal("ptr"))
+		})
+
+		It("should be `slice` type to dynamodb attribute value", func() {
+			Expect(sut["slice"].L).Should(HaveLen(3))
+		})
+
+		It("should be `child` type to dynamodb attribute value", func() {
+			child := sut["child"].M
+			Expect(*child["content"].S).To(Equal("bar_child"))
 		})
 	})
 })

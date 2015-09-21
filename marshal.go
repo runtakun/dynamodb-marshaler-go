@@ -207,7 +207,60 @@ func marshalValue(value reflect.Value) *dynamodb.AttributeValue {
 		return makeUInt64AttrValue(value.Uint())
 	case reflect.Float32, reflect.Float64:
 		return makeFloat64AttrValue(value.Float())
+	case reflect.Array:
+		return marshalArrayValue(value)
+	case reflect.Interface:
+		return marshalInterfaceValue(value)
+	case reflect.Map:
+		return makeMapAttrValue(value)
+	case reflect.Ptr:
+		return marshalPtrValue(value)
+	case reflect.Slice:
+		return marshalSliceValue(value)
+	case reflect.Struct:
+		return marshalStructValue(value)
+	case reflect.UnsafePointer:
+		return nil
 	}
 
 	return nil
+}
+
+func marshalArrayValue(value reflect.Value) *dynamodb.AttributeValue {
+	length := value.Len()
+
+	list := make([]*dynamodb.AttributeValue, length)
+	for i := 0; i < length; i++ {
+		list[i] = marshalValue(value.Index(i))
+	}
+
+	return &dynamodb.AttributeValue{L: list}
+}
+
+func marshalInterfaceValue(value reflect.Value) *dynamodb.AttributeValue {
+	if value.IsNil() {
+		return makeNullAttrValue()
+	}
+
+	return marshalValue(value.Elem())
+}
+
+func marshalPtrValue(value reflect.Value) *dynamodb.AttributeValue {
+	if value.IsNil() {
+		return makeNullAttrValue()
+	}
+
+	return marshalValue(value.Elem())
+}
+
+func marshalSliceValue(value reflect.Value) *dynamodb.AttributeValue {
+	if value.IsNil() {
+		return makeNullAttrValue()
+	}
+
+	return marshalArrayValue(value)
+}
+
+func marshalStructValue(value reflect.Value) *dynamodb.AttributeValue {
+	return &dynamodb.AttributeValue{M: marshalStruct(value)}
 }
