@@ -34,6 +34,7 @@ type sample struct {
 	Map             map[string]interface{} `dynamodb:"map"`
 	Ptr             *string                `dynamodb:"ptr"`
 	Slice           []string               `dynamodb:"slice"`
+	EmptySlice      []int                  `dynamodb:"empty_slice"`
 	Child           child                  `dynamodb:"child"`
 }
 
@@ -67,6 +68,7 @@ var _ = Describe("Marshal", func() {
 				Float32:         math.E,
 				Float64:         math.Pi,
 				Arr:             [3]int{1, 2, 3},
+				EmptySlice:      []int{},
 				InterfaceInt:    12345,
 				InterfaceString: "bar",
 				Map: map[string]interface{}{
@@ -162,6 +164,11 @@ var _ = Describe("Marshal", func() {
 		It("should be `arr` element to dynamodb attribute value", func() {
 			Expect(sut["arr"].L).Should(HaveLen(3))
 			Expect(sut["arr"].S).To(BeNil())
+		})
+
+		It("should be `arr` element to dynamodb attribute value", func() {
+			Expect(*sut["empty_slice"].NULL).To(BeTrue())
+			Expect(sut["empty_slice"].N).To(BeNil())
 		})
 
 		It("should be interface type to dynamodb attribute value", func() {
