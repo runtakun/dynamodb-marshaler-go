@@ -35,7 +35,7 @@ type sample struct {
 	Ptr             *string                `dynamodb:"ptr"`
 	Slice           []string               `dynamodb:"slice"`
 	EmptySlice      []int                  `dynamodb:"empty_slice"`
-	Child           child                  `dynamodb:"child"`
+	Child           *child                 `dynamodb:"child"`
 }
 
 type child struct {
@@ -77,7 +77,7 @@ var _ = Describe("Marshal", func() {
 				},
 				Ptr:   &ptr,
 				Slice: []string{"f", "o", "o"},
-				Child: child{Content: "bar_child"},
+				Child: &child{Content: "bar_child"},
 			}
 			sut = Marshal(s)
 			GinkgoWriter.Write([]byte(awsutil.Prettify(sut)))
@@ -195,4 +195,26 @@ var _ = Describe("Marshal", func() {
 			Expect(*child["content"].S).To(Equal("bar_child"))
 		})
 	})
+
+	Context("empty value", func() {
+
+		var sut map[string]*dynamodb.AttributeValue
+
+		BeforeEach(func() {
+			s := &sample{
+				Str:   "",
+				Map:   nil,
+				Child: nil,
+			}
+			sut = Marshal(s)
+			GinkgoWriter.Write([]byte(awsutil.Prettify(sut)))
+		})
+
+		It("should be `str` type to null value", func() {
+			Expect(*sut["str"].NULL).To(BeTrue())
+			Expect(sut["str"].S).To(BeNil())
+		})
+
+	})
+
 })
