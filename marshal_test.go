@@ -215,6 +215,11 @@ var _ = Describe("Marshal", func() {
 			Expect(sut["str"].S).To(BeNil())
 		})
 
+		It("should be `map` type to null value", func() {
+			Expect(*sut["map"].NULL).To(BeTrue())
+			Expect(sut["map"].M).To(BeNil())
+		})
+
 	})
 
 })

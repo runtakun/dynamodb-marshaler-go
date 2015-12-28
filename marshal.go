@@ -161,6 +161,10 @@ func marshalArrayValue(value reflect.Value) *dynamodb.AttributeValue {
 }
 
 func marshalMapValue(value reflect.Value) *dynamodb.AttributeValue {
+	if value.IsNil() {
+		return makeNullAttrValue()
+	}
+
 	return &dynamodb.AttributeValue{M: marshalMap(value)}
 }
 
