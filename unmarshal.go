@@ -2,11 +2,10 @@ package ddb
 
 import (
 	"errors"
-	"log"
 	"reflect"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/kr/pretty"
 )
 
 // Unmarshal converts dynamodb attribute value map to map or struct
@@ -35,8 +34,6 @@ func Unmarshal(item map[string]*dynamodb.AttributeValue, v interface{}) error {
 			dest.Set(reflect.New(t))
 		}
 
-		log.Println(pretty.Sprintf("dest: %#v", dest))
-
 		destType := dest.Elem().Type()
 		numOfField := destType.NumField()
 		for i := 0; i < numOfField; i++ {
@@ -63,6 +60,30 @@ func Unmarshal(item map[string]*dynamodb.AttributeValue, v interface{}) error {
 					if value.S != nil {
 						dest.Elem().FieldByIndex(f.Index).SetString(*value.S)
 					}
+				case reflect.Bool:
+					if value.BOOL != nil {
+						dest.Elem().FieldByIndex(f.Index).SetBool(*value.BOOL)
+					}
+				case reflect.Int:
+					dest.Elem().FieldByIndex(f.Index).SetInt(parseIntAttrValue(value, 0))
+				case reflect.Int8:
+					dest.Elem().FieldByIndex(f.Index).SetInt(parseIntAttrValue(value, 8))
+				case reflect.Int16:
+					dest.Elem().FieldByIndex(f.Index).SetInt(parseIntAttrValue(value, 16))
+				case reflect.Int32:
+					dest.Elem().FieldByIndex(f.Index).SetInt(parseIntAttrValue(value, 32))
+				case reflect.Int64:
+					dest.Elem().FieldByIndex(f.Index).SetInt(parseIntAttrValue(value, 64))
+				case reflect.Uint:
+					dest.Elem().FieldByIndex(f.Index).SetUint(parseUintAttrValue(value, 0))
+				case reflect.Uint8:
+					dest.Elem().FieldByIndex(f.Index).SetUint(parseUintAttrValue(value, 8))
+				case reflect.Uint16:
+					dest.Elem().FieldByIndex(f.Index).SetUint(parseUintAttrValue(value, 16))
+				case reflect.Uint32:
+					dest.Elem().FieldByIndex(f.Index).SetUint(parseUintAttrValue(value, 32))
+				case reflect.Uint64:
+					dest.Elem().FieldByIndex(f.Index).SetUint(parseUintAttrValue(value, 64))
 				}
 			}
 		}
@@ -70,4 +91,14 @@ func Unmarshal(item map[string]*dynamodb.AttributeValue, v interface{}) error {
 	}
 
 	return nil
+}
+
+func parseIntAttrValue(value *dynamodb.AttributeValue, bitSize int) int64 {
+	n, _ := strconv.ParseInt(*value.N, 10, bitSize)
+	return n
+}
+
+func parseUintAttrValue(value *dynamodb.AttributeValue, bitSize int) uint64 {
+	n, _ := strconv.ParseUint(*value.N, 10, bitSize)
+	return n
 }
