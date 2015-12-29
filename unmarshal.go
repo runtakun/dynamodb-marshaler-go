@@ -55,35 +55,41 @@ func Unmarshal(item map[string]*dynamodb.AttributeValue, v interface{}) error {
 			}
 
 			if value, ok := item[name]; ok {
+				targetField := dest.Elem().FieldByIndex(f.Index)
+
 				switch f.Type.Kind() {
 				case reflect.String:
 					if value.S != nil {
-						dest.Elem().FieldByIndex(f.Index).SetString(*value.S)
+						targetField.SetString(*value.S)
 					}
 				case reflect.Bool:
 					if value.BOOL != nil {
-						dest.Elem().FieldByIndex(f.Index).SetBool(*value.BOOL)
+						targetField.SetBool(*value.BOOL)
 					}
 				case reflect.Int:
-					dest.Elem().FieldByIndex(f.Index).SetInt(parseIntAttrValue(value, 0))
+					targetField.SetInt(parseIntAttrValue(value, 0))
 				case reflect.Int8:
-					dest.Elem().FieldByIndex(f.Index).SetInt(parseIntAttrValue(value, 8))
+					targetField.SetInt(parseIntAttrValue(value, 8))
 				case reflect.Int16:
-					dest.Elem().FieldByIndex(f.Index).SetInt(parseIntAttrValue(value, 16))
+					targetField.SetInt(parseIntAttrValue(value, 16))
 				case reflect.Int32:
-					dest.Elem().FieldByIndex(f.Index).SetInt(parseIntAttrValue(value, 32))
+					targetField.SetInt(parseIntAttrValue(value, 32))
 				case reflect.Int64:
-					dest.Elem().FieldByIndex(f.Index).SetInt(parseIntAttrValue(value, 64))
+					targetField.SetInt(parseIntAttrValue(value, 64))
 				case reflect.Uint:
-					dest.Elem().FieldByIndex(f.Index).SetUint(parseUintAttrValue(value, 0))
+					targetField.SetUint(parseUintAttrValue(value, 0))
 				case reflect.Uint8:
-					dest.Elem().FieldByIndex(f.Index).SetUint(parseUintAttrValue(value, 8))
+					targetField.SetUint(parseUintAttrValue(value, 8))
 				case reflect.Uint16:
-					dest.Elem().FieldByIndex(f.Index).SetUint(parseUintAttrValue(value, 16))
+					targetField.SetUint(parseUintAttrValue(value, 16))
 				case reflect.Uint32:
-					dest.Elem().FieldByIndex(f.Index).SetUint(parseUintAttrValue(value, 32))
+					targetField.SetUint(parseUintAttrValue(value, 32))
 				case reflect.Uint64:
-					dest.Elem().FieldByIndex(f.Index).SetUint(parseUintAttrValue(value, 64))
+					targetField.SetUint(parseUintAttrValue(value, 64))
+				case reflect.Float32:
+					targetField.SetFloat(parseFloatAttrValue(value, 32))
+				case reflect.Float64:
+					targetField.SetFloat(parseFloatAttrValue(value, 64))
 				}
 			}
 		}
@@ -101,4 +107,9 @@ func parseIntAttrValue(value *dynamodb.AttributeValue, bitSize int) int64 {
 func parseUintAttrValue(value *dynamodb.AttributeValue, bitSize int) uint64 {
 	n, _ := strconv.ParseUint(*value.N, 10, bitSize)
 	return n
+}
+
+func parseFloatAttrValue(value *dynamodb.AttributeValue, bitSize int) float64 {
+	f, _ := strconv.ParseFloat(*value.N, bitSize)
+	return f
 }

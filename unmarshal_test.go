@@ -2,6 +2,8 @@ package ddb_test
 
 import (
 	"fmt"
+	"math"
+	"strconv"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -19,18 +21,20 @@ var _ = Describe("Unmarshal", func() {
 
 		BeforeEach(func() {
 			d := map[string]*dynamodb.AttributeValue{
-				"str":    &dynamodb.AttributeValue{S: aws.String("foo")},
-				"bool":   &dynamodb.AttributeValue{BOOL: aws.Bool(true)},
-				"int":    &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", -42775))},
-				"int8":   &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", -100))},
-				"int16":  &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", -12345))},
-				"int32":  &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", -1073741014))},
-				"int64":  &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", -1112222111222111))},
-				"uint":   &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", 42775))},
-				"uint8":  &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", 111))},
-				"uint16": &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", 12345))},
-				"uint32": &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", 1073741014))},
-				"uint64": &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", 1112222111222111))},
+				"str":     &dynamodb.AttributeValue{S: aws.String("foo")},
+				"bool":    &dynamodb.AttributeValue{BOOL: aws.Bool(true)},
+				"int":     &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", -42775))},
+				"int8":    &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", -100))},
+				"int16":   &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", -12345))},
+				"int32":   &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", -1073741014))},
+				"int64":   &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", -1112222111222111))},
+				"uint":    &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", 42775))},
+				"uint8":   &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", 111))},
+				"uint16":  &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", 12345))},
+				"uint32":  &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", 1073741014))},
+				"uint64":  &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", 1112222111222111))},
+				"float32": &dynamodb.AttributeValue{N: aws.String(strconv.FormatFloat(math.Pi, 'f', -1, 32))},
+				"float64": &dynamodb.AttributeValue{N: aws.String(strconv.FormatFloat(math.E, 'f', -1, 64))},
 			}
 			Unmarshal(d, &sut)
 		})
@@ -85,8 +89,12 @@ var _ = Describe("Unmarshal", func() {
 			Expect(sut.Uint32).To(Equal(uint32(1073741014)))
 		})
 
-		It("should be struct which has `Uint64` column", func() {
-			Expect(sut.Uint64).To(Equal(uint64(1112222111222111)))
+		It("should be struct which has `float32` column", func() {
+			Expect(sut.Float32).To(Equal(float32(math.Pi)))
+		})
+
+		It("should be struct which has `float64` column", func() {
+			Expect(sut.Float64).To(Equal(float64(math.E)))
 		})
 
 	})
