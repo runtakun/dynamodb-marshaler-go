@@ -35,6 +35,11 @@ var _ = Describe("Unmarshal", func() {
 				"uint64":  &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", 1112222111222111))},
 				"float32": &dynamodb.AttributeValue{N: aws.String(strconv.FormatFloat(math.Pi, 'f', -1, 32))},
 				"float64": &dynamodb.AttributeValue{N: aws.String(strconv.FormatFloat(math.E, 'f', -1, 64))},
+				"slice": &dynamodb.AttributeValue{SS: []*string{
+					aws.String("a"),
+					aws.String("b"),
+					aws.String("c"),
+				}},
 			}
 			Unmarshal(d, &sut)
 		})
@@ -95,6 +100,13 @@ var _ = Describe("Unmarshal", func() {
 
 		It("should be struct which has `float64` column", func() {
 			Expect(sut.Float64).To(Equal(float64(math.E)))
+		})
+
+		It("should be struct which has `slice` column", func() {
+			Expect(sut.Slice).Should(HaveLen(3))
+			Expect(sut.Slice[0]).To(Equal("a"))
+			Expect(sut.Slice[1]).To(Equal("b"))
+			Expect(sut.Slice[2]).To(Equal("c"))
 		})
 
 	})

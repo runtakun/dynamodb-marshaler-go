@@ -57,40 +57,51 @@ func Unmarshal(item map[string]*dynamodb.AttributeValue, v interface{}) error {
 			if value, ok := item[name]; ok {
 				targetField := dest.Elem().FieldByIndex(f.Index)
 
-				switch f.Type.Kind() {
-				case reflect.String:
-					if value.S != nil {
+				if value.S != nil {
+					if f.Type.Kind() == reflect.String {
 						targetField.SetString(*value.S)
 					}
-				case reflect.Bool:
-					if value.BOOL != nil {
+				} else if value.BOOL != nil {
+					if f.Type.Kind() == reflect.Bool {
 						targetField.SetBool(*value.BOOL)
 					}
-				case reflect.Int:
-					targetField.SetInt(parseIntAttrValue(value, 0))
-				case reflect.Int8:
-					targetField.SetInt(parseIntAttrValue(value, 8))
-				case reflect.Int16:
-					targetField.SetInt(parseIntAttrValue(value, 16))
-				case reflect.Int32:
-					targetField.SetInt(parseIntAttrValue(value, 32))
-				case reflect.Int64:
-					targetField.SetInt(parseIntAttrValue(value, 64))
-				case reflect.Uint:
-					targetField.SetUint(parseUintAttrValue(value, 0))
-				case reflect.Uint8:
-					targetField.SetUint(parseUintAttrValue(value, 8))
-				case reflect.Uint16:
-					targetField.SetUint(parseUintAttrValue(value, 16))
-				case reflect.Uint32:
-					targetField.SetUint(parseUintAttrValue(value, 32))
-				case reflect.Uint64:
-					targetField.SetUint(parseUintAttrValue(value, 64))
-				case reflect.Float32:
-					targetField.SetFloat(parseFloatAttrValue(value, 32))
-				case reflect.Float64:
-					targetField.SetFloat(parseFloatAttrValue(value, 64))
+				} else if value.N != nil {
+					switch f.Type.Kind() {
+					case reflect.Int:
+						targetField.SetInt(parseIntAttrValue(value, 0))
+					case reflect.Int8:
+						targetField.SetInt(parseIntAttrValue(value, 8))
+					case reflect.Int16:
+						targetField.SetInt(parseIntAttrValue(value, 16))
+					case reflect.Int32:
+						targetField.SetInt(parseIntAttrValue(value, 32))
+					case reflect.Int64:
+						targetField.SetInt(parseIntAttrValue(value, 64))
+					case reflect.Uint:
+						targetField.SetUint(parseUintAttrValue(value, 0))
+					case reflect.Uint8:
+						targetField.SetUint(parseUintAttrValue(value, 8))
+					case reflect.Uint16:
+						targetField.SetUint(parseUintAttrValue(value, 16))
+					case reflect.Uint32:
+						targetField.SetUint(parseUintAttrValue(value, 32))
+					case reflect.Uint64:
+						targetField.SetUint(parseUintAttrValue(value, 64))
+					case reflect.Float32:
+						targetField.SetFloat(parseFloatAttrValue(value, 32))
+					case reflect.Float64:
+						targetField.SetFloat(parseFloatAttrValue(value, 64))
+					}
+				} else if value.SS != nil {
+					length := len(value.SS)
+					stringType := reflect.TypeOf("string")
+					arr := reflect.MakeSlice(reflect.SliceOf(stringType), length, length)
+					for i, s := range value.SS {
+						arr.Index(i).SetString(*s)
+					}
+					targetField.Set(arr)
 				}
+
 			}
 		}
 
