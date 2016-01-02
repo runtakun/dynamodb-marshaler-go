@@ -111,6 +111,13 @@ func Unmarshal(item map[string]*dynamodb.AttributeValue, v interface{}) error {
 						arr.Index(i).SetInt(int64(n))
 					}
 					targetField.Set(arr)
+				} else if value.BS != nil {
+					length := len(value.BS)
+					arr := reflect.MakeSlice(reflect.SliceOf(typeOfBytes), length, length)
+					for i, bs := range value.BS {
+						arr.Index(i).SetBytes(bs)
+					}
+					targetField.Set(arr)
 				}
 			}
 		}
