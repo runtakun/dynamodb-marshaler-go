@@ -40,6 +40,11 @@ var _ = Describe("Unmarshal", func() {
 					aws.String("b"),
 					aws.String("c"),
 				}},
+				"empty_slice": &dynamodb.AttributeValue{NS: []*string{
+					aws.String("1"),
+					aws.String("2"),
+					aws.String("3"),
+				}},
 			}
 			Unmarshal(d, &sut)
 		})
@@ -107,6 +112,13 @@ var _ = Describe("Unmarshal", func() {
 			Expect(sut.Slice[0]).To(Equal("a"))
 			Expect(sut.Slice[1]).To(Equal("b"))
 			Expect(sut.Slice[2]).To(Equal("c"))
+		})
+
+		It("should be struct which has `empty_slice` column", func() {
+			Expect(sut.EmptySlice).Should(HaveLen(3))
+			Expect(sut.EmptySlice[0]).To(Equal(1))
+			Expect(sut.EmptySlice[1]).To(Equal(2))
+			Expect(sut.EmptySlice[2]).To(Equal(3))
 		})
 
 	})
