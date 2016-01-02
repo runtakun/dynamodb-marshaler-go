@@ -65,6 +65,8 @@ func Unmarshal(item map[string]*dynamodb.AttributeValue, v interface{}) error {
 					if f.Type.Kind() == reflect.Bool {
 						targetField.SetBool(*value.BOOL)
 					}
+				} else if value.B != nil {
+					targetField.SetBytes(value.B)
 				} else if value.N != nil {
 					switch f.Type.Kind() {
 					case reflect.Int:

@@ -23,6 +23,7 @@ var _ = Describe("Unmarshal", func() {
 			d := map[string]*dynamodb.AttributeValue{
 				"str":     &dynamodb.AttributeValue{S: aws.String("foo")},
 				"bool":    &dynamodb.AttributeValue{BOOL: aws.Bool(true)},
+				"blob":    &dynamodb.AttributeValue{B: []byte{0x1, 0x2, 0x3}},
 				"int":     &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", -42775))},
 				"int8":    &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", -100))},
 				"int16":   &dynamodb.AttributeValue{N: aws.String(fmt.Sprintf("%d", -12345))},
@@ -61,6 +62,13 @@ var _ = Describe("Unmarshal", func() {
 		It("should be struct which has `Bool` column", func() {
 			Expect(sut.Bool).To(BeTrue())
 			Expect(sut.Bool).NotTo(BeFalse())
+		})
+
+		It("should be struct which has `Blob` column", func() {
+			Expect(sut.Blob).Should(HaveLen(3))
+			Expect(sut.Blob[0]).To(Equal(byte(1)))
+			Expect(sut.Blob[1]).To(Equal(byte(2)))
+			Expect(sut.Blob[2]).To(Equal(byte(3)))
 		})
 
 		It("should be struct which has `Int` column", func() {
