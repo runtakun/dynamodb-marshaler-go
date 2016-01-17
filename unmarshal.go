@@ -43,7 +43,7 @@ func Unmarshal(item map[string]*dynamodb.AttributeValue, v interface{}) error {
 				continue
 			}
 
-			name, option := parseTag(f.Tag.Get("dynamodb"))
+			name, option := parseTag(f.Tag.Get("json"))
 			if name == "-" {
 				continue
 			}
