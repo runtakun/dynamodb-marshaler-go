@@ -3,19 +3,37 @@ package ddb
 import (
 	"errors"
 	"reflect"
+	"runtime"
 	"strconv"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
 
+var stringType = reflect.TypeOf("string")
+
 // Unmarshal converts dynamodb attribute value map to map or struct
-func Unmarshal(item map[string]*dynamodb.AttributeValue, v interface{}) error {
+func Unmarshal(item map[string]*dynamodb.AttributeValue, v interface{}) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			if _, ok := r.(runtime.Error); ok {
+				panic(r)
+			}
+			err = r.(error)
+		}
+	}()
+
+	if reflect.TypeOf(v).Kind() != reflect.Ptr {
+		return errors.New("value must be a pointer")
+	}
+
+	return unmarshalItem(item, v)
+}
+
+func unmarshalItem(item map[string]*dynamodb.AttributeValue, v interface{}) error {
 	t := reflect.TypeOf(v)
 
 	if t.Kind() == reflect.Ptr {
 		t = t.Elem()
-	} else {
-		return errors.New("value must be a pointer")
 	}
 
 	isptr := false
@@ -96,7 +114,6 @@ func Unmarshal(item map[string]*dynamodb.AttributeValue, v interface{}) error {
 					}
 				} else if value.SS != nil {
 					length := len(value.SS)
-					stringType := reflect.TypeOf("string")
 					arr := reflect.MakeSlice(reflect.SliceOf(stringType), length, length)
 					for i, s := range value.SS {
 						arr.Index(i).SetString(*s)
@@ -118,10 +135,29 @@ func Unmarshal(item map[string]*dynamodb.AttributeValue, v interface{}) error {
 						arr.Index(i).SetBytes(bs)
 					}
 					targetField.Set(arr)
+				} else if value.M != nil {
+					m, err := parseMapAttrValue(value, f.Type)
+					if err != nil {
+						return err
+					}
+					targetField.Set(*m)
+				} else if value.L != nil {
+					length := len(value.L)
+					elementType := f.Type.Elem()
+					arr := reflect.MakeSlice(reflect.SliceOf(elementType), length, length)
+					for i, l := range value.L {
+						m, err := parseMapAttrValue(l, elementType)
+						if err != nil {
+							return err
+						}
+						arr.Index(i).Set(*m)
+					}
+					targetField.Set(arr)
 				}
 			}
 		}
-
+	} else if t.Kind() == reflect.Map {
+		// TODO implement map
 	}
 
 	return nil
@@ -140,4 +176,30 @@ func parseUintAttrValue(value *dynamodb.AttributeValue, bitSize int) uint64 {
 func parseFloatAttrValue(value *dynamodb.AttributeValue, bitSize int) float64 {
 	f, _ := strconv.ParseFloat(*value.N, bitSize)
 	return f
+}
+
+func parseMapAttrValue(value *dynamodb.AttributeValue, t reflect.Type) (*reflect.Value, error) {
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	if t.Kind() == reflect.Struct {
+		dest := reflect.New(t)
+		if err := unmarshalItem(value.M, dest.Interface()); err != nil {
+			return nil, err
+		}
+		return &dest, nil
+	} else if t.Kind() == reflect.Map {
+		// TODO implement for map[string]interface{}
+		m := make(map[string]string)
+
+		for k, v := range value.M {
+			m[k] = *v.S
+		}
+
+		mapValue := reflect.ValueOf(m)
+		return &mapValue, nil
+	}
+
+	return nil, errors.New("unknown err")
 }
