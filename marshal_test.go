@@ -13,33 +13,33 @@ import (
 )
 
 type sample struct {
-	Str             string                 `dynamodb:"str"`
-	Bool            bool                   `dynamodb:"bool"`
-	Blob            []byte                 `dynamodb:"blob"`
-	Int             int                    `dynamodb:"int"`
-	Int8            int8                   `dynamodb:"int8"`
-	Int16           int16                  `dynamodb:"int16"`
-	Int32           int32                  `dynamodb:"int32"`
-	Int64           int64                  `dynamodb:"int64"`
-	Uint            uint                   `dynamodb:"uint"`
-	Uint8           uint8                  `dynamodb:"uint8"`
-	Uint16          uint16                 `dynamodb:"uint16"`
-	Uint32          uint32                 `dynamodb:"uint32"`
-	Uint64          uint64                 `dynamodb:"uint64"`
-	Float32         float32                `dynamodb:"float32"`
-	Float64         float64                `dynamodb:"float64"`
-	Arr             [3]int                 `dynamodb:"arr"`
-	InterfaceInt    interface{}            `dynamodb:"interface_int"`
-	InterfaceString interface{}            `dynamodb:"interface_str"`
-	Map             map[string]interface{} `dynamodb:"map"`
-	Ptr             *string                `dynamodb:"ptr"`
-	Slice           []string               `dynamodb:"slice"`
-	EmptySlice      []int                  `dynamodb:"empty_slice"`
-	Child           *child                 `dynamodb:"child"`
+	Str             string                 `json:"str"`
+	Bool            bool                   `json:"bool"`
+	Blob            []byte                 `json:"blob"`
+	Int             int                    `json:"int"`
+	Int8            int8                   `json:"int8"`
+	Int16           int16                  `json:"int16"`
+	Int32           int32                  `json:"int32"`
+	Int64           int64                  `json:"int64"`
+	Uint            uint                   `json:"uint"`
+	Uint8           uint8                  `json:"uint8"`
+	Uint16          uint16                 `json:"uint16"`
+	Uint32          uint32                 `json:"uint32"`
+	Uint64          uint64                 `json:"uint64"`
+	Float32         float32                `json:"float32"`
+	Float64         float64                `json:"float64"`
+	Arr             [3]int                 `json:"arr"`
+	InterfaceInt    interface{}            `json:"interface_int"`
+	InterfaceString interface{}            `json:"interface_str"`
+	Map             map[string]interface{} `json:"map"`
+	Ptr             *string                `json:"ptr"`
+	Slice           []string               `json:"slice"`
+	EmptySlice      []int                  `json:"empty_slice"`
+	Child           *child                 `json:"child"`
 }
 
 type child struct {
-	Content string `dynamodb:"content"`
+	Content string `json:"content"`
 }
 
 var _ = Describe("Marshal", func() {

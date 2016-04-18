@@ -51,7 +51,7 @@ func marshalStruct(value reflect.Value) map[string]*dynamodb.AttributeValue {
 			continue
 		}
 
-		name, option := parseTag(f.Tag.Get("dynamodb"))
+		name, option := parseTag(f.Tag.Get("json"))
 		if name == "-" {
 			continue
 		}
