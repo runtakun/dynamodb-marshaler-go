@@ -148,10 +148,6 @@ func makeNumberAttrValue(str string) *dynamodb.AttributeValue {
 func marshalArrayValue(value reflect.Value) *dynamodb.AttributeValue {
 	length := value.Len()
 
-	if length == 0 {
-		return makeNullAttrValue()
-	}
-
 	list := make([]*dynamodb.AttributeValue, length)
 	for i := 0; i < length; i++ {
 		list[i] = marshalValue(value.Index(i))
