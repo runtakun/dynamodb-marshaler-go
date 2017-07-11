@@ -166,8 +166,8 @@ var _ = Describe("Marshal", func() {
 			Expect(sut["arr"].S).To(BeNil())
 		})
 
-		It("should be `arr` element to dynamodb attribute value", func() {
-			Expect(*sut["empty_slice"].NULL).To(BeTrue())
+		It("should be `empty_slice` element to dynamodb attribute value", func() {
+			Expect(sut["empty_slice"].L).Should(HaveLen(0))
 			Expect(sut["empty_slice"].N).To(BeNil())
 		})
 
