@@ -72,7 +72,7 @@ var _ = Describe("Marshal", func() {
 				InterfaceInt:    12345,
 				InterfaceString: "bar",
 				Map: map[string]interface{}{
-					"map_str": "map_bar",
+					"map_foo": "map_bar",
 					"map_int": 54321,
 				},
 				Ptr:   &ptr,
@@ -178,7 +178,7 @@ var _ = Describe("Marshal", func() {
 
 		It("should be `map` type to dynamodb attribute value", func() {
 			m := sut["map"].M
-			Expect(*m["map_str"].S).To(Equal("map_bar"))
+			Expect(*m["map_foo"].S).To(Equal("map_bar"))
 			Expect(*m["map_int"].N).To(Equal("54321"))
 		})
 
