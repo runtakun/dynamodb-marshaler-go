@@ -47,9 +47,10 @@ var _ = Describe("Unmarshal", func() {
 					aws.String("3"),
 				}},
 				"map": &dynamodb.AttributeValue{M: map[string]*dynamodb.AttributeValue{
-					"map_foo":  &dynamodb.AttributeValue{S: aws.String("map_bar")},
-					"map_int":  &dynamodb.AttributeValue{N: aws.String("54321")},
-					"map_long": &dynamodb.AttributeValue{N: aws.String("1223362036844775800")},
+					"map_foo":   &dynamodb.AttributeValue{S: aws.String("map_bar")},
+					"map_int":   &dynamodb.AttributeValue{N: aws.String("54321")},
+					"map_long":  &dynamodb.AttributeValue{N: aws.String("1223362036844775800")},
+					"map_float": &dynamodb.AttributeValue{N: aws.String("3.14")},
 				}},
 			}
 			Unmarshal(d, &sut)
@@ -134,20 +135,35 @@ var _ = Describe("Unmarshal", func() {
 			Expect(sut.EmptySlice[2]).To(Equal(3))
 		})
 
-		It("should be map which has `map` column", func() {
+		It("should be map which has `map_foo` column", func() {
 			Expect(sut.Map).ShouldNot(BeNil())
 
-			v1, ok1 := sut.Map["map_foo"]
-			Expect(ok1).Should(BeTrue())
-			Expect(v1).To(Equal("map_bar"))
+			v, ok := sut.Map["map_foo"]
+			Expect(ok).Should(BeTrue())
+			Expect(v).To(Equal("map_bar"))
+		})
+		It("should be map which has `map_int` column", func() {
+			Expect(sut.Map).ShouldNot(BeNil())
 
-			v2, ok2 := sut.Map["map_int"]
-			Expect(ok2).Should(BeTrue())
-			Expect(v2).To(Equal(54321))
+			v, ok := sut.Map["map_int"]
+			Expect(ok).Should(BeTrue())
+			Expect(v).To(Equal(54321))
+		})
 
-			v3, ok3 := sut.Map["map_long"]
-			Expect(ok3).Should(BeTrue())
-			Expect(v3).To(Equal(1223362036844775800))
+		It("should be map which has `map_long` column", func() {
+			Expect(sut.Map).ShouldNot(BeNil())
+
+			v, ok := sut.Map["map_long"]
+			Expect(ok).Should(BeTrue())
+			Expect(v).To(Equal(1223362036844775800))
+		})
+
+		It("should be map which has `map_float` column", func() {
+			Expect(sut.Map).ShouldNot(BeNil())
+
+			v, ok := sut.Map["map_float"]
+			Expect(ok).Should(BeTrue())
+			Expect(v).To(Equal(3.14))
 		})
 	})
 })
