@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
@@ -135,12 +136,6 @@ func unmarshalItem(item map[string]*dynamodb.AttributeValue, v interface{}) erro
 						arr.Index(i).SetBytes(bs)
 					}
 					targetField.Set(arr)
-				} else if value.M != nil {
-					m, err := parseMapAttrValue(value, f.Type)
-					if err != nil {
-						return err
-					}
-					targetField.Set(*m)
 				} else if value.L != nil {
 					length := len(value.L)
 					elementType := f.Type.Elem()
@@ -153,6 +148,12 @@ func unmarshalItem(item map[string]*dynamodb.AttributeValue, v interface{}) erro
 						arr.Index(i).Set(*m)
 					}
 					targetField.Set(arr)
+				} else if value.M != nil {
+					m, err := parseMapAttrValue(value, f.Type)
+					if err != nil {
+						return err
+					}
+					targetField.Set(*m)
 				}
 			}
 		}
@@ -190,15 +191,34 @@ func parseMapAttrValue(value *dynamodb.AttributeValue, t reflect.Type) (*reflect
 		}
 		return &dest, nil
 	} else if t.Kind() == reflect.Map {
-		// TODO implement for map[string]interface{}
-		m := make(map[string]string)
+		dest := reflect.MakeMap(t)
 
 		for k, v := range value.M {
-			m[k] = *v.S
+			var value interface{}
+
+			if v.S != nil {
+				value = *v.S
+			} else if v.N != nil {
+				number := *v.N
+				index := strings.Index(number, ".")
+
+				if index > -1 {
+					// number is float
+					value, _ = strconv.ParseFloat(number, 64)
+				} else {
+					n, _ := strconv.ParseInt(number, 10, 64)
+					if n >= -2147483648 || n <= 2147483647 {
+						value = int(n)
+					} else {
+						value = n
+					}
+				}
+			}
+
+			dest.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(value))
 		}
 
-		mapValue := reflect.ValueOf(m)
-		return &mapValue, nil
+		return &dest, nil
 	}
 
 	return nil, errors.New("unknown err")

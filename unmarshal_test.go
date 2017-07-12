@@ -47,8 +47,9 @@ var _ = Describe("Unmarshal", func() {
 					aws.String("3"),
 				}},
 				"map": &dynamodb.AttributeValue{M: map[string]*dynamodb.AttributeValue{
-					"map_foo": &dynamodb.AttributeValue{S: aws.String("map_bar")},
-					"map_int": &dynamodb.AttributeValue{N: aws.String("54321")},
+					"map_foo":  &dynamodb.AttributeValue{S: aws.String("map_bar")},
+					"map_int":  &dynamodb.AttributeValue{N: aws.String("54321")},
+					"map_long": &dynamodb.AttributeValue{N: aws.String("1223362036844775800")},
 				}},
 			}
 			Unmarshal(d, &sut)
@@ -133,7 +134,7 @@ var _ = Describe("Unmarshal", func() {
 			Expect(sut.EmptySlice[2]).To(Equal(3))
 		})
 
-		It("should be struct which has `map` column", func() {
+		It("should be map which has `map` column", func() {
 			Expect(sut.Map).ShouldNot(BeNil())
 
 			v1, ok1 := sut.Map["map_foo"]
@@ -143,6 +144,10 @@ var _ = Describe("Unmarshal", func() {
 			v2, ok2 := sut.Map["map_int"]
 			Expect(ok2).Should(BeTrue())
 			Expect(v2).To(Equal(54321))
+
+			v3, ok3 := sut.Map["map_long"]
+			Expect(ok3).Should(BeTrue())
+			Expect(v3).To(Equal(1223362036844775800))
 		})
 	})
 })
