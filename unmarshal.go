@@ -213,6 +213,14 @@ func parseMapAttrValue(value *dynamodb.AttributeValue, t reflect.Type) (*reflect
 						value = n
 					}
 				}
+			} else if v.SS != nil {
+				length := len(v.SS)
+				arr := make([]string, length, length)
+				for i, s := range v.SS {
+					arr[i] = *s
+				}
+
+				value = arr
 			}
 
 			dest.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(value))
