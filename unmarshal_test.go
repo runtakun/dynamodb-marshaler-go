@@ -54,6 +54,12 @@ var _ = Describe("Unmarshal", func() {
 					"map_ss":    &dynamodb.AttributeValue{SS: []*string{aws.String("b"), aws.String("a"), aws.String("r")}},
 					"map_ns":    &dynamodb.AttributeValue{NS: []*string{aws.String("1"), aws.String("2"), aws.String("3")}},
 					"map_bs":    &dynamodb.AttributeValue{BS: [][]byte{[]byte{0x1, 0x2, 0x3}, []byte{0x3, 0x2, 0x1}, []byte{0x3, 0x3, 0x3}}},
+					"map_list": &dynamodb.AttributeValue{L: []*dynamodb.AttributeValue{
+						&dynamodb.AttributeValue{S: aws.String("a")},
+						&dynamodb.AttributeValue{N: aws.String("1")},
+						&dynamodb.AttributeValue{M: map[string]*dynamodb.AttributeValue{"hoge": &dynamodb.AttributeValue{S: aws.String("fuga")}}},
+					}},
+					"map_map": &dynamodb.AttributeValue{M: map[string]*dynamodb.AttributeValue{"hoge": &dynamodb.AttributeValue{S: aws.String("fuga")}}},
 				}},
 			}
 			Unmarshal(d, &sut)
@@ -209,6 +215,38 @@ var _ = Describe("Unmarshal", func() {
 			Expect(vv[0]).To(Equal([]byte{0x1, 0x2, 0x3}))
 			Expect(vv[1]).To(Equal([]byte{0x3, 0x2, 0x1}))
 			Expect(vv[2]).To(Equal([]byte{0x3, 0x3, 0x3}))
+		})
+
+		// It("should be map which has `map_list` column", func() {
+		// 	Expect(sut.Map).ShouldNot(BeNil())
+
+		// 	v, ok := sut.Map["map_list"]
+		// 	Expect(ok).Should(BeTrue())
+
+		// 	vv := v.([]interface{})
+
+		// 	Expect(vv).Should(HaveLen(3))
+		// 	Expect(vv[0]).To(Equal("a"))
+		// 	Expect(vv[1]).To(Equal(1))
+
+		// 	vvv := vv[2].(map[string]interface{})
+
+		// 	v1, ok1 := vvv["hoge"]
+		// 	Expect(ok1).Should(BeTrue())
+		// 	Expect(v1).To(Equal("fuga"))
+		// })
+
+		It("should be map which has `map_map` column", func() {
+			Expect(sut.Map).ShouldNot(BeNil())
+
+			v, ok := sut.Map["map_map"]
+			Expect(ok).Should(BeTrue())
+
+			vv := v.(map[string]interface{})
+
+			v1, ok1 := vv["hoge"]
+			Expect(ok1).Should(BeTrue())
+			Expect(v1).To(Equal("fuga"))
 		})
 	})
 })

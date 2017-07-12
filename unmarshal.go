@@ -191,38 +191,7 @@ func parseMapAttrValue(value *dynamodb.AttributeValue, t reflect.Type) (*reflect
 		}
 		return &dest, nil
 	} else if t.Kind() == reflect.Map {
-		dest := reflect.MakeMap(t)
-
-		for k, v := range value.M {
-			var value interface{}
-
-			if v.S != nil {
-				value = *v.S
-			} else if v.N != nil {
-				value = parseNumber(*v.N)
-			} else if v.SS != nil {
-				length := len(v.SS)
-				arr := make([]string, length, length)
-				for i, s := range v.SS {
-					arr[i] = *s
-				}
-
-				value = arr
-			} else if v.NS != nil {
-				length := len(v.NS)
-				arr := make([]interface{}, length, length)
-				for i, s := range v.NS {
-					arr[i] = parseNumber(*s)
-				}
-				value = arr
-			} else if v.BS != nil {
-				value = v.BS
-			}
-
-			dest.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(value))
-		}
-
-		return &dest, nil
+		return parseMapValue(value.M, t)
 	}
 
 	return nil, errors.New("unknown err")
@@ -243,4 +212,40 @@ func parseNumber(v string) interface{} {
 	}
 
 	return n
+}
+
+func parseMapValue(value map[string]*dynamodb.AttributeValue, typ reflect.Type) (*reflect.Value, error) {
+	dest := reflect.MakeMap(typ)
+
+	for k, v := range value {
+		if v.S != nil {
+			dest.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(*v.S))
+		} else if v.N != nil {
+			dest.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(parseNumber(*v.N)))
+		} else if v.SS != nil {
+			length := len(v.SS)
+			arr := make([]string, length, length)
+			for i, s := range v.SS {
+				arr[i] = *s
+			}
+			dest.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(arr))
+		} else if v.NS != nil {
+			length := len(v.NS)
+			arr := make([]interface{}, length, length)
+			for i, s := range v.NS {
+				arr[i] = parseNumber(*s)
+			}
+			dest.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(arr))
+		} else if v.BS != nil {
+			dest.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(v.BS))
+		} else if v.M != nil {
+			v, err := parseMapAttrValue(v, typ)
+			if err != nil {
+				return nil, err
+			}
+			dest.SetMapIndex(reflect.ValueOf(k), *v)
+		}
+	}
+
+	return &dest, nil
 }
