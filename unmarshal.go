@@ -199,20 +199,7 @@ func parseMapAttrValue(value *dynamodb.AttributeValue, t reflect.Type) (*reflect
 			if v.S != nil {
 				value = *v.S
 			} else if v.N != nil {
-				number := *v.N
-				index := strings.Index(number, ".")
-
-				if index > -1 {
-					// number is float
-					value, _ = strconv.ParseFloat(number, 64)
-				} else {
-					n, _ := strconv.ParseInt(number, 10, 64)
-					if n >= -2147483648 || n <= 2147483647 {
-						value = int(n)
-					} else {
-						value = n
-					}
-				}
+				value = parseNumber(*v.N)
 			} else if v.SS != nil {
 				length := len(v.SS)
 				arr := make([]string, length, length)
@@ -221,6 +208,15 @@ func parseMapAttrValue(value *dynamodb.AttributeValue, t reflect.Type) (*reflect
 				}
 
 				value = arr
+			} else if v.NS != nil {
+				length := len(v.NS)
+				arr := make([]interface{}, length, length)
+				for i, s := range v.NS {
+					arr[i] = parseNumber(*s)
+				}
+				value = arr
+			} else if v.BS != nil {
+				value = v.BS
 			}
 
 			dest.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(value))
@@ -230,4 +226,21 @@ func parseMapAttrValue(value *dynamodb.AttributeValue, t reflect.Type) (*reflect
 	}
 
 	return nil, errors.New("unknown err")
+}
+
+func parseNumber(v string) interface{} {
+	index := strings.Index(v, ".")
+
+	if index > -1 {
+		// number is float
+		value, _ := strconv.ParseFloat(v, 64)
+		return value
+	}
+
+	n, _ := strconv.ParseInt(v, 10, 64)
+	if n >= -2147483648 || n <= 2147483647 {
+		return int(n)
+	}
+
+	return n
 }
