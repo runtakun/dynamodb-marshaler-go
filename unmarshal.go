@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"runtime"
 	"strconv"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 )
@@ -135,12 +136,6 @@ func unmarshalItem(item map[string]*dynamodb.AttributeValue, v interface{}) erro
 						arr.Index(i).SetBytes(bs)
 					}
 					targetField.Set(arr)
-				} else if value.M != nil {
-					m, err := parseMapAttrValue(value, f.Type)
-					if err != nil {
-						return err
-					}
-					targetField.Set(*m)
 				} else if value.L != nil {
 					length := len(value.L)
 					elementType := f.Type.Elem()
@@ -153,6 +148,12 @@ func unmarshalItem(item map[string]*dynamodb.AttributeValue, v interface{}) erro
 						arr.Index(i).Set(*m)
 					}
 					targetField.Set(arr)
+				} else if value.M != nil {
+					m, err := parseMapAttrValue(value, f.Type)
+					if err != nil {
+						return err
+					}
+					targetField.Set(*m)
 				}
 			}
 		}
@@ -190,16 +191,61 @@ func parseMapAttrValue(value *dynamodb.AttributeValue, t reflect.Type) (*reflect
 		}
 		return &dest, nil
 	} else if t.Kind() == reflect.Map {
-		// TODO implement for map[string]interface{}
-		m := make(map[string]string)
-
-		for k, v := range value.M {
-			m[k] = *v.S
-		}
-
-		mapValue := reflect.ValueOf(m)
-		return &mapValue, nil
+		return parseMapValue(value.M, t)
 	}
 
 	return nil, errors.New("unknown err")
+}
+
+func parseNumber(v string) interface{} {
+	index := strings.Index(v, ".")
+
+	if index > -1 {
+		// number is float
+		value, _ := strconv.ParseFloat(v, 64)
+		return value
+	}
+
+	n, _ := strconv.ParseInt(v, 10, 64)
+	if n >= -2147483648 || n <= 2147483647 {
+		return int(n)
+	}
+
+	return n
+}
+
+func parseMapValue(value map[string]*dynamodb.AttributeValue, typ reflect.Type) (*reflect.Value, error) {
+	dest := reflect.MakeMap(typ)
+
+	for k, v := range value {
+		if v.S != nil {
+			dest.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(*v.S))
+		} else if v.N != nil {
+			dest.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(parseNumber(*v.N)))
+		} else if v.SS != nil {
+			length := len(v.SS)
+			arr := make([]string, length, length)
+			for i, s := range v.SS {
+				arr[i] = *s
+			}
+			dest.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(arr))
+		} else if v.NS != nil {
+			length := len(v.NS)
+			arr := make([]interface{}, length, length)
+			for i, s := range v.NS {
+				arr[i] = parseNumber(*s)
+			}
+			dest.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(arr))
+		} else if v.BS != nil {
+			dest.SetMapIndex(reflect.ValueOf(k), reflect.ValueOf(v.BS))
+		} else if v.M != nil {
+			v, err := parseMapAttrValue(v, typ)
+			if err != nil {
+				return nil, err
+			}
+			dest.SetMapIndex(reflect.ValueOf(k), *v)
+		}
+	}
+
+	return &dest, nil
 }

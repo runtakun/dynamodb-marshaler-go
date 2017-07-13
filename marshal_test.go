@@ -72,8 +72,9 @@ var _ = Describe("Marshal", func() {
 				InterfaceInt:    12345,
 				InterfaceString: "bar",
 				Map: map[string]interface{}{
-					"map_str": "map_bar",
-					"map_int": 54321,
+					"map_foo":  "map_bar",
+					"map_int":  54321,
+					"map_long": 1223362036844775800,
 				},
 				Ptr:   &ptr,
 				Slice: []string{"f", "o", "o"},
@@ -166,8 +167,8 @@ var _ = Describe("Marshal", func() {
 			Expect(sut["arr"].S).To(BeNil())
 		})
 
-		It("should be `arr` element to dynamodb attribute value", func() {
-			Expect(*sut["empty_slice"].NULL).To(BeTrue())
+		It("should be `empty_slice` element to dynamodb attribute value", func() {
+			Expect(sut["empty_slice"].L).Should(HaveLen(0))
 			Expect(sut["empty_slice"].N).To(BeNil())
 		})
 
@@ -178,8 +179,9 @@ var _ = Describe("Marshal", func() {
 
 		It("should be `map` type to dynamodb attribute value", func() {
 			m := sut["map"].M
-			Expect(*m["map_str"].S).To(Equal("map_bar"))
+			Expect(*m["map_foo"].S).To(Equal("map_bar"))
 			Expect(*m["map_int"].N).To(Equal("54321"))
+			Expect(*m["map_long"].N).To(Equal("1223362036844775800"))
 		})
 
 		It("should be `ptr` type to dynamodb attribute value", func() {
