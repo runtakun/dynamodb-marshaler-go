@@ -249,4 +249,58 @@ var _ = Describe("Unmarshal", func() {
 			Expect(v1).To(Equal("fuga"))
 		})
 	})
+
+	Context("unmarshal struct map", func() {
+		type TestB struct {
+			TestC map[string]interface{} `json:"test_c"`
+		}
+
+		type TestA struct {
+			TestB *TestB `json:"test_b"`
+		}
+
+		type Test struct {
+			TestA *TestA `json:"test_a"`
+		}
+
+		var sut Test
+
+		BeforeEach(func() {
+			d := map[string]*dynamodb.AttributeValue{
+				"test_a": &dynamodb.AttributeValue{
+					M: map[string]*dynamodb.AttributeValue{
+						"test_b": &dynamodb.AttributeValue{M: map[string]*dynamodb.AttributeValue{
+							"test_c": &dynamodb.AttributeValue{M: map[string]*dynamodb.AttributeValue{
+								"test_d": &dynamodb.AttributeValue{M: map[string]*dynamodb.AttributeValue{
+									"hoge": &dynamodb.AttributeValue{S: aws.String("fuga")},
+								}},
+							}},
+						}},
+					},
+				},
+			}
+
+			if err := Unmarshal(d, &sut); err != nil {
+				fmt.Println(err)
+			}
+		})
+
+		It("should not be nil", func() {
+			Expect(sut.TestA).ShouldNot(BeNil())
+			Expect(sut.TestA.TestB).ShouldNot(BeNil())
+		})
+
+		It("should not be nil", func() {
+			Expect(sut.TestA.TestB.TestC).ShouldNot(BeNil())
+
+			v1, ok1 := sut.TestA.TestB.TestC["test_d"]
+			Expect(ok1).Should(BeTrue())
+
+			vv := v1.(map[string]interface{})
+
+			v2, ok2 := vv["hoge"]
+			Expect(ok2).Should(BeTrue())
+			Expect(v2).To(Equal("fuga"))
+		})
+	})
 })
